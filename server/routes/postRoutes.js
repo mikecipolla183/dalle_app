@@ -24,6 +24,22 @@ router.route('/').get(async (req, res) => {
     }
 });
 
+// Route to get a specifc post.
+router.route('/:postId').get(async (req, res) => {
+    try {
+        const postId = req.params.postId;
+        const postWithComments = await Post.findById(postId).populate('comments');
+
+        if (!postWithComments) {
+            return res.status(404).json({ success: false, message: 'Post not found' });
+        }
+
+        res.status(200).json({ success: true, data: postWithComments });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error });
+    }
+});
+
 // Route to create a post.
 router.route('/').post(async (req, res) => {
     try {
@@ -37,6 +53,23 @@ router.route('/').post(async (req, res) => {
         });
 
         res.status(200).json({ success: true, data: newPost });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error });
+    }
+});
+
+//Route to add a comment to a post.
+router.route('/:postId/comments').post(async (req, res) => {
+    try {
+        const postId = req.params.postId;
+        const { user, text } = req.body;
+
+        const post = await Post.findById(postId);
+
+        post.comments.push({ user, text });
+        await post.save();
+
+        res.status(200).json({ success: true, data: post });
     } catch (error) {
         res.status(500).json({ success: false, message: error });
     }
